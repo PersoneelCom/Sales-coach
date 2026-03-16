@@ -64,13 +64,26 @@ def summarize_call(transcript: dict) -> str:
 You are analyzing a sales call transcript.
 
 Write clean markdown with these exact sections:
+## Call Type
+## Conversation Structure
 ## Call Summary
+## Questions Asked
 ## Key Pain Points
 ## Objections
+## Coaching Tips
+## Decision Signals
 ## Next Steps
+## Call Score
 
 Rules:
+- For Call Type, choose the best fit such as Cold Call, Demo Call, Closing Call, Follow-up Call, or Discovery Call.
+- For Conversation Structure, explain the flow of the conversation in short bullets.
 - Keep it concise and useful for a salesperson.
+- Capture questions asked by either side, especially buying questions and clarification questions.
+- Capture objections about price, timing, trust, fit, risk, or implementation if they appear.
+- Coaching Tips must be short actionable bullets for the salesperson.
+- In Decision Signals, note positive buying intent, hesitation, or missing commitment.
+- In Call Score, give one total score out of 10 and then short bullet scores for Opening, Discovery, Pain Finding, Objection Handling, Closing, Confidence, Clarity, and Listening.
 - Mention both Dutch and English content naturally if present.
 - Use bullet points where useful.
 - Do not invent facts that are not in the transcript.
