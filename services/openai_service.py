@@ -33,15 +33,20 @@ def _to_dict(data: Any) -> dict:
 def transcribe_call(file_name: str, audio_bytes: bytes) -> dict:
     client = _get_client()
     model = get_setting("OPENAI_TRANSCRIPTION_MODEL", "gpt-4o-transcribe-diarize")
+    response_format = "diarized_json" if "diarize" in model else "json"
 
     audio_stream = io.BytesIO(audio_bytes)
     audio_stream.name = file_name
 
-    response = client.audio.transcriptions.create(
-        model=model,
-        file=audio_stream,
-        response_format="verbose_json",
-    )
+    request_kwargs = {
+        "model": model,
+        "file": audio_stream,
+        "response_format": response_format,
+    }
+    if "diarize" in model:
+        request_kwargs["chunking_strategy"] = "auto"
+
+    response = client.audio.transcriptions.create(**request_kwargs)
     payload = _to_dict(response)
     return merge_segments_into_transcript(payload)
 

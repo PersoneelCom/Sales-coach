@@ -28,14 +28,22 @@ def _normalize_speaker(raw_value: Any, index: int) -> str:
 
 
 def merge_segments_into_transcript(payload: dict) -> dict:
-    raw_segments = payload.get("segments") or []
+    raw_segments = (
+        payload.get("segments")
+        or payload.get("speaker_segments")
+        or payload.get("diarization")
+        or []
+    )
     segments = []
 
     for index, segment in enumerate(raw_segments):
-        start = segment.get("start")
-        end = segment.get("end")
-        speaker = _normalize_speaker(segment.get("speaker"), index)
-        text = (segment.get("text") or "").strip()
+        start = segment.get("start") or segment.get("start_time")
+        end = segment.get("end") or segment.get("end_time")
+        speaker = _normalize_speaker(
+            segment.get("speaker") or segment.get("speaker_label") or segment.get("label"),
+            index,
+        )
+        text = (segment.get("text") or segment.get("transcript") or "").strip()
 
         if not text:
             continue

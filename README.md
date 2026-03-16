@@ -113,6 +113,36 @@ The easiest path is Streamlit Community Cloud:
 4. Set your secrets there instead of using `.env`.
 5. Deploy `app.py`.
 
+## 5. Deploy with a real custom domain
+
+If you want a domain like `salescoach.personeel.com`, use Render instead of Streamlit Community Cloud.
+
+This repo includes `render.yaml`, so Render can read the app settings directly from the repository.
+
+### Render deployment flow
+
+1. Create or sign in to your Render account.
+2. Create a new Blueprint instance from this GitHub repository.
+3. Let Render read `render.yaml`.
+4. Add these environment variables in Render:
+   - `OPENAI_API_KEY`
+   - `GOOGLE_SERVICE_ACCOUNT_JSON`
+   - `GOOGLE_DOC_SHARE_EMAIL`
+   - `GOOGLE_DRIVE_FOLDER_ID` if you want a fixed folder
+5. Deploy the web service.
+
+After deployment, Render will give you a public `onrender.com` URL.
+
+### Connect `salescoach.personeel.com`
+
+1. In Render, open the deployed service.
+2. Go to `Settings` -> `Custom Domains`.
+3. Add `salescoach.personeel.com`.
+4. In your DNS provider for `personeel.com`, create the CNAME record that Render tells you to create.
+5. Wait for verification and SSL certificate issuance.
+
+After DNS verification, `https://salescoach.personeel.com` will point to the app.
+
 ## Important limitations in this MVP
 
 - Speaker diarization quality depends on the transcription model output.
