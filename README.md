@@ -125,10 +125,10 @@ This repo includes `render.yaml`, so Render can read the app settings directly f
 2. Create a new Blueprint instance from this GitHub repository.
 3. Let Render read `render.yaml`.
 4. Add these environment variables in Render:
-   - `OPENAI_API_KEY`
-   - `GOOGLE_SERVICE_ACCOUNT_JSON`
-   - `GOOGLE_DOC_SHARE_EMAIL`
-   - `GOOGLE_DRIVE_FOLDER_ID` if you want a fixed folder
+- `OPENAI_API_KEY`
+- `GOOGLE_SERVICE_ACCOUNT_JSON`
+- `GOOGLE_DOC_SHARE_EMAIL`
+- `GOOGLE_DRIVE_FOLDER_ID` if you want a fixed folder
 5. Deploy the web service.
 
 After deployment, Render will give you a public `onrender.com` URL.
