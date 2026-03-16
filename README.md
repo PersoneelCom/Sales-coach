@@ -36,7 +36,21 @@ Add it to a local `.env` file:
 OPENAI_API_KEY=your_openai_api_key_here
 OPENAI_TRANSCRIPTION_MODEL=gpt-4o-transcribe-diarize
 OPENAI_SUMMARY_MODEL=gpt-4o-mini
+AUTH_REQUIRED=true
+APP_PASSWORD_HASH='pbkdf2_sha256$390000$replace_me$replace_me'
+MAX_UPLOAD_MB=50
+MAX_AUDIO_MINUTES=30
+PROCESS_COOLDOWN_SECONDS=60
+ALLOW_GOOGLE_EXPORT=true
 ```
+
+Generate `APP_PASSWORD_HASH` with:
+
+```powershell
+python -c "from services.security import build_password_hash; print(build_password_hash('choose-a-strong-password'))"
+```
+
+If you store the hash in a local `.env` file that Docker Compose will read, keep the value quoted because the hash contains `$` characters.
 
 ## 2. Set up Google Docs export
 
@@ -94,58 +108,79 @@ For this machine, you can also start it with:
 Open `.env` and add:
 
 - `OPENAI_API_KEY`: your new rotated OpenAI key
+- `APP_PASSWORD_HASH`: a strong password hash for the access gate
 - `GOOGLE_SERVICE_ACCOUNT_JSON`: the full JSON from your Google service account
 - `GOOGLE_DOC_SHARE_EMAIL`: your Gmail address
 
 Without those values:
 
 - transcription and summaries will not work
+- access control will block the app when `AUTH_REQUIRED=true`
 - Google Docs export will not work
 - PDF export is already wired in the app
 
-## 4. How publishing works later
+## 4. Deploy with Coolify
 
-The easiest path is Streamlit Community Cloud:
+This repo now includes a `Dockerfile` and `docker-compose.yml`, so Coolify can deploy it as a Docker-based app without a custom start command.
 
-1. Push this repo to GitHub.
-2. Create a Streamlit Community Cloud account.
-3. Connect the GitHub repo.
-4. Set your secrets there instead of using `.env`.
-5. Deploy `app.py`.
+For a Coolify deployment on a bare metal server:
 
-## 5. Deploy with a real custom domain
-
-If you want a domain like `salescoach.personeel.com`, use Render instead of Streamlit Community Cloud.
-
-This repo includes `render.yaml`, so Render can read the app settings directly from the repository.
-
-### Render deployment flow
-
-1. Create or sign in to your Render account.
-2. Create a new Blueprint instance from this GitHub repository.
-3. Let Render read `render.yaml`.
-4. Add these environment variables in Render:
+1. Create a new Docker-based application in Coolify from this repository.
+2. Use the included `Dockerfile`.
+3. Expose port `8501` internally. Coolify can keep handling the public port and HTTPS.
+2. Set these environment variables in Coolify:
 - `OPENAI_API_KEY`
+- `APP_PASSWORD_HASH`
+- `AUTH_REQUIRED=true`
+- `MAX_UPLOAD_MB`
+- `MAX_AUDIO_MINUTES`
+- `PROCESS_COOLDOWN_SECONDS`
+- `ALLOW_GOOGLE_EXPORT`
 - `GOOGLE_SERVICE_ACCOUNT_JSON`
 - `GOOGLE_DOC_SHARE_EMAIL`
 - `GOOGLE_DRIVE_FOLDER_ID` if you want a fixed folder
-5. Deploy the web service.
+4. Enable HTTPS on the Coolify-managed domain before real users access the app.
+5. Configure an ingress request-body limit that matches `MAX_UPLOAD_MB`.
+6. Add edge rate limiting in the reverse proxy. The in-app cooldown helps, but it is not a substitute for network-layer throttling.
 
-After deployment, Render will give you a public `onrender.com` URL.
+### Local Docker run
 
-### Connect `salescoach.personeel.com`
+For local parity with the containerized deployment:
 
-1. In Render, open the deployed service.
-2. Go to `Settings` -> `Custom Domains`.
-3. Add `salescoach.personeel.com`.
-4. In your DNS provider for `personeel.com`, create the CNAME record that Render tells you to create.
-5. Wait for verification and SSL certificate issuance.
+```powershell
+docker compose up --build
+```
 
-After DNS verification, `https://salescoach.personeel.com` will point to the app.
+The app will be available on `http://localhost:8501`.
+
+## 5. Auth model
+
+The current auth is a single shared password gate inside the Streamlit app.
+
+- `AUTH_REQUIRED=true` makes the app fail closed and show only the login form until a user enters the correct password.
+- `APP_PASSWORD_HASH` stores a PBKDF2-SHA256 hash, not the raw password.
+- The password is verified in-app against that hash before upload or processing controls are shown.
+- This is suitable for a small internal tool, but it is not user-based auth and it does not give you audit trails, per-user permissions, or SSO.
+
+Generate a new hash with:
+
+```powershell
+python -c "from services.security import build_password_hash; print(build_password_hash('choose-a-strong-password'))"
+```
+
+For anything beyond a small internal deployment, put the app behind stronger edge auth as well, such as Coolify behind an OAuth proxy, Cloudflare Access, or your existing SSO layer.
+
+### Recommended production controls
+
+- Keep `AUTH_REQUIRED=true`.
+- Use a long random password and rotate it if access changes.
+- Restrict the Google service account to a dedicated folder and least-privilege workspace access.
+- Keep the app internal or behind an additional edge access layer if possible.
+- Do not upload customer calls until your OpenAI and Google data handling is approved internally.
 
 ## Important limitations in this MVP
 
 - Speaker diarization quality depends on the transcription model output.
-- This version assumes only one person uses the app.
+- Access control is password-based unless you add stronger auth in front of the app.
 - The app does not store transcripts in a database yet.
 - Google Docs export needs setup before it will work.

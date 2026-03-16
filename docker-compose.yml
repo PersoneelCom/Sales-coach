@@ -1,0 +1,12 @@
+services:
+  sales-coach:
+    build:
+      context: .
+    ports:
+      - "8501:8501"
+    env_file:
+      - ${ENV_FILE:-.env}
+    environment:
+      PORT: 8501
+      AUTH_REQUIRED: "true"
+    restart: unless-stopped

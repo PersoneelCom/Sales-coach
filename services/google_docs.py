@@ -8,7 +8,7 @@ from services.config import get_json_setting, get_setting
 
 GOOGLE_SCOPES = [
     "https://www.googleapis.com/auth/documents",
-    "https://www.googleapis.com/auth/drive",
+    "https://www.googleapis.com/auth/drive.file",
 ]
 
 
